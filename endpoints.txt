@@ -1,0 +1,59 @@
+Cricket Backend API Endpoints
+
+Auth
+- POST /api/v1/auth/signup
+  Creates a new user account.
+- POST /api/v1/auth/login
+  Logs in a user and returns auth details.
+- POST /api/auth/signup
+  Legacy alias for signup.
+- POST /api/auth/login
+  Legacy alias for login.
+
+Teams
+- GET /api/v1/teams
+  Returns all teams.
+- POST /api/v1/teams
+  Creates a new team using hostUserId and teamName.
+- GET /api/v1/teams/{teamId}/players
+  Returns all players in a team.
+- POST /api/v1/teams/{teamId}/players
+  Adds a player to a team using playerName and role.
+
+Matches
+- POST /api/v1/matches/single
+  Creates a single match between two teams with selected overs.
+- GET /api/v1/matches
+  Lists matches. Optional filters: hostUserId, status, type.
+- GET /api/v1/matches/{matchId}
+  Returns details of one match.
+- POST /api/v1/matches/{matchId}/innings/{inningsNo}/start
+  Starts an innings with batting team, openers, and bowler.
+- POST /api/v1/matches/{matchId}/ball
+  Submits one ball event like run, wicket, wide, no-ball, or extra.
+- GET /api/v1/matches/{matchId}/scoreboard
+  Returns the current scoreboard for a match.
+- POST /api/v1/matches/{matchId}/undo-last-ball
+  Reverts the most recently submitted ball.
+
+Series
+- POST /api/v1/series
+  Creates a series between two teams.
+- GET /api/v1/series
+  Lists series. Optional filter: status.
+- GET /api/v1/series/{seriesId}
+  Returns details of one series.
+
+Tournaments
+- POST /api/v1/tournaments
+  Creates a tournament with teams, overs, grouping, and schedule type.
+- GET /api/v1/tournaments
+  Lists tournaments. Optional filter: status.
+- GET /api/v1/tournaments/{tournamentId}
+  Returns details of one tournament.
+- GET /api/v1/tournaments/{tournamentId}/points-table
+  Returns the tournament points table.
+
+Audience
+- GET /api/v1/audience/dashboard
+  Returns dashboard data for the audience/viewer side.
