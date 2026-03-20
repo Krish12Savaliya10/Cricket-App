@@ -4,7 +4,6 @@ import com.cricket.cricketbackend.dto.request.LoginRequest
 import com.cricket.cricketbackend.dto.request.SignupRequest
 import com.cricket.cricketbackend.dto.response.AuthResponse
 import com.cricket.cricketbackend.exception.BadRequestException
-import com.cricket.cricketbackend.exception.ResourceNotFoundException
 import com.cricket.cricketbackend.model.entity.UserEntity
 import com.cricket.cricketbackend.repository.UserRepository
 import org.springframework.stereotype.Service
@@ -16,7 +15,8 @@ class AuthService(
 ) {
     @Transactional
     fun signup(request: SignupRequest): AuthResponse {
-        val existing = userRepository.findAll().firstOrNull { it.email.equals(request.email!!, ignoreCase = true) }
+        val normalizedEmail = request.email!!.trim().lowercase()
+        val existing = userRepository.findByEmailIgnoreCase(normalizedEmail)
         if (existing != null) {
             throw BadRequestException("Email already exists")
         }
@@ -24,7 +24,7 @@ class AuthService(
             UserEntity(
                 id = IdGenerator.nextLegacyStyleId(),
                 fullName = request.fullName!!.trim().uppercase(),
-                email = request.email!!.trim().lowercase(),
+                email = normalizedEmail,
                 password = request.password!!,
                 role = request.role!!.trim().uppercase(),
             ),
@@ -33,9 +33,13 @@ class AuthService(
     }
 
     fun login(request: LoginRequest): AuthResponse {
-        val user = userRepository.findAll().firstOrNull {
-            it.email.equals(request.email!!, ignoreCase = true) && it.password == request.password
-        } ?: throw ResourceNotFoundException("Invalid credentials")
+        val normalizedEmail = request.email!!.trim().lowercase()
+        val normalizedPassword = request.password!!
+        val user = userRepository.findByEmailIgnoreCase(normalizedEmail)
+            ?: throw BadRequestException("Invalid credentials")
+        if (user.password != normalizedPassword) {
+            throw BadRequestException("Invalid credentials")
+        }
         return user.toResponse()
     }
 

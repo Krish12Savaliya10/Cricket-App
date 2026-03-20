@@ -13,6 +13,7 @@ import com.cricket.cricketbackend.model.entity.MatchStatus
 import com.cricket.cricketbackend.model.entity.MatchType
 import com.cricket.cricketbackend.model.entity.PlayerMatchStatsEntity
 import com.cricket.cricketbackend.model.entity.TeamMatchStatsEntity
+import com.cricket.cricketbackend.model.state.MatchState
 import com.cricket.cricketbackend.repository.MatchRepository
 import com.cricket.cricketbackend.repository.PlayerMatchStatsRepository
 import com.cricket.cricketbackend.repository.TeamMatchStatsRepository
@@ -101,13 +102,8 @@ class MatchService(
         legacySimulationBridgeService.submitBall(match, request)
         syncScoreboardToStats(matchId)
         val scoreboard = scoreboardService.fromCurrentState(matchId)
-        if (scoreboard.status == MatchStatus.COMPLETED.name && match.winnerTeam == null) {
-            // TODO: derive winner/result using the full legacy engine when interactive state is bridged directly.
-            match.matchStatus = MatchStatus.COMPLETED
-            matchRepository.save(match)
-        }
         return BallResultResponse(
-            scoreboard = scoreboardService.fromCurrentState(matchId),
+            scoreboard = scoreboard,
             matchStatus = scoreboard.status,
         )
     }
@@ -244,7 +240,18 @@ class MatchService(
         }
         if (state.status == MatchStatus.COMPLETED.name) {
             match.matchStatus = MatchStatus.COMPLETED
+            match.winnerTeam = resolveWinnerTeam(state, match)
             matchRepository.save(match)
         }
     }
+
+    private fun resolveWinnerTeam(state: MatchState, match: MatchEntity) =
+        when {
+            teamRuns(state, match.team1!!.id) > teamRuns(state, match.team2!!.id) -> match.team1
+            teamRuns(state, match.team2!!.id) > teamRuns(state, match.team1!!.id) -> match.team2
+            else -> null
+        }
+
+    private fun teamRuns(state: MatchState, teamId: Int): Int =
+        state.innings.values.filter { it.battingTeamId == teamId }.sumOf { it.totalRuns }
 }
